@@ -51,6 +51,11 @@ option (SMLNJ_CFGC_BUILD
 option (SMLNJ_DEBUG_CODEGEN
   "Enable debug messages in the code-generator library" OFF)
 
+# LLVM uses "all" for all supported architectures, but we only support 2
+if(NOT LLVM_TARGETS_TO_BUILD OR LLVM_TARGETS_TO_BUILD STREQUAL "all")
+    set(LLVM_TARGETS_TO_BUILD "X86;AArch64")
+endif()
+
 ## Begin LLVM Configuration ##
 message(STATUS "** START LLVM CONFIGURATION **")
 add_subdirectory(llvm)
