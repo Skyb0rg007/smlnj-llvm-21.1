@@ -24,11 +24,12 @@
 #       -install <dir>  -- specify installation directory; default is this directory
 #       -ninja          -- generate build.ninja files (instead of Unix makefiles)
 #
+set -e
 
 # get location of this script as an absolute path
 #
-CMDDIR=`dirname "$0"`
-LLVMDIR=$(cd $CMDDIR; pwd)
+CMDDIR="$(dirname "$0")"
+LLVMDIR="$(cd "$CMDDIR" && pwd)"
 
 usage() {
   echo "usage: build-llvm.sh [ options ]"
@@ -43,7 +44,7 @@ usage() {
   echo "    -config            configure, but do not compile"
   echo "    -install <dir>     specify installation directory (default: $CMDDIR)"
   echo "    -ninja             generate build.ninja files (instead of Unix makefiles)"
-  exit $1
+  exit "$1"
 }
 
 CONFIG_ONLY=no
@@ -60,9 +61,9 @@ INSTALL_PREFIX="$LLVMDIR"
 
 # system specific defaults
 #
-case `uname -s` in
+case $(uname -s) in
   Darwin)
-    case `uname -p` in
+    case $(uname -p) in
       arm) # on arm processors, we only use the performance cores
         NPROCS=$(sysctl -n hw.perflevel0.physicalcpu)
         ;;
@@ -72,12 +73,12 @@ case `uname -s` in
     esac
   ;;
   Linux)
-    if [ -x /bin/nproc ] ; then
+    if command -v nproc >/dev/null 2>&1; then
       # NPROCS reports the number of hardware threads, which is usually twice the
       # number of actual cores, so we will divide by two.
-      NPROCS=$(/bin/nproc --all)
-      if [ $NPROCS -gt 4 ] ; then
-         NPROCS=$(($NPROCS / 2))
+      NPROCS=$(nproc --all)
+      if [ "$NPROCS" -gt 4 ] ; then
+         NPROCS=$((NPROCS / 2))
       fi
     fi
   ;;
@@ -150,8 +151,7 @@ fi
 
 # check that we have a version of CMake that understands presets
 #
-cmake --list-presets > /dev/null 2>&1
-if [ $? != 0 ] ; then
+if ! cmake --list-presets >/dev/null 2>&1; then
   echo "Installation of SML/NJ requires CMake version 3.23 or later"
   exit 1
 fi
@@ -184,10 +184,6 @@ if [ -d build ] ; then
   rm -rf build bin lib include
 fi
 
-echo "build-llvm.sh: mkdir build"
-mkdir build
-cd build
-
 if [ x"$GENERATOR" = xmake ] ; then
   CMAKE_GENERATOR="Unix Makefiles"
 elif [ x"$GENERATOR" = xninja ] ; then
@@ -198,13 +194,12 @@ else
 fi
 
 echo "build-llvm.sh: configuring build"
-echo "  cmake --preset=$PRESET -G \"$CMAKE_GENERATOR\" $CMAKE_DEFS .."
-cmake --preset=$PRESET -G "$CMAKE_GENERATOR" $CMAKE_DEFS .. || exit 1
+echo "  cmake -S . -B build --preset=$PRESET -G \"$CMAKE_GENERATOR\" $CMAKE_DEFS .."
+cmake -S . -B build --preset="$PRESET" -G "$CMAKE_GENERATOR" $CMAKE_DEFS || exit 1
 
 if [ x"$CONFIG_ONLY" = xno ] ; then
 
   echo "build-llvm.sh: building LLVM on $NPROCS cores"
-  echo "  $GENERATOR -j $NPROCS install"
-  $GENERATOR -j $NPROCS install
-
+  echo "  cmake --build build --parallel $NPROCS --target install"
+  cmake --build build --parallel "$NPROCS" --target install
 fi
