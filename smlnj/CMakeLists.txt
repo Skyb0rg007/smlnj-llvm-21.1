@@ -29,9 +29,9 @@ if(PROJECT_IS_TOP_LEVEL)
 
   # determine the archicture
   #
-  if (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "x86_64")
+  if (CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "x86_64")
     set(SMLNJ_ARCH_AMD64 ON)
-  elseif ((${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "arm64") OR (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "aarch64"))
+  elseif (CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
     set(SMLNJ_ARCH_ARM64 ON)
   else ()
     message(FATAL_ERROR "unsupported architecture ${CMAKE_HOST_SYSTEM_PROCESSOR}")
@@ -40,10 +40,10 @@ if(PROJECT_IS_TOP_LEVEL)
   # determine the enabled targets
   #
   foreach(T IN LISTS LLVM_TARGETS_TO_BUILD)
-    if(${T} STREQUAL "X86")
+    if(T STREQUAL "X86")
       message(STATUS "enable X86 target")
       set(SMLNJ_ENABLE_X86 ON)
-    elseif(${T} STREQUAL "AArch64")
+    elseif(T STREQUAL "AArch64")
       message(STATUS "enable ARM64 target")
       set(SMLNJ_ENABLE_ARM64 ON)
     else()
