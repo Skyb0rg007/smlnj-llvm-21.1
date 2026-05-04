@@ -62,9 +62,6 @@ add_subdirectory(llvm EXCLUDE_FROM_ALL)
 message(VERBOSE "** LLVM CONFIGURATION DONE **")
 ## End LLVM Configuration ##
 
-# enable verbose makefiles during development
-#
-set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # The CFG Code Generation Library
 #

@@ -11,6 +11,7 @@
             "hidden" : true,
             "binaryDir" : "${sourceDir}/build",
             "cacheVariables": {
+                "CMAKE_VERBOSE_MAKEFILE" : "ON",
                 "CMAKE_OSX_DEPLOYMENT_TARGET" : "11",
                 "LLVM_ENABLE_BINDINGS" : "OFF",
                 "LLVM_ENABLE_LIBXML2" : "OFF",
