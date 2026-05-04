@@ -14,6 +14,9 @@ project(smlnj-llvm
   HOMEPAGE_URL https://smlnj.org
   LANGUAGES C CXX)
 
+# LLVM cache variable settings
+include(cmake/llvm_settings.cmake)
+
 # more checks for when we are building the LLVM stuff as a standalone project
 #
 if (PROJECT_IS_TOP_LEVEL)
