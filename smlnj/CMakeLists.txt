@@ -72,7 +72,7 @@ else() # NOT PROJECT_IS_TOP_LEVEL
 
 endif()
 
-include_directories(include)
+include_directories(include ${CMAKE_CURRENT_BINARY_DIR}/include)
 add_subdirectory(include)
 add_subdirectory(lib-codegen)
 add_subdirectory(lib-heap2obj)
