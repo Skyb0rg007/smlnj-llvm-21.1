@@ -57,9 +57,9 @@ if(NOT LLVM_TARGETS_TO_BUILD OR LLVM_TARGETS_TO_BUILD STREQUAL "all")
 endif()
 
 ## Begin LLVM Configuration ##
-message(STATUS "** START LLVM CONFIGURATION **")
-add_subdirectory(llvm)
-message(STATUS "** LLVM CONFIGURATION DONE **")
+message(VERBOSE "** START LLVM CONFIGURATION **")
+add_subdirectory(llvm EXCLUDE_FROM_ALL)
+message(VERBOSE "** LLVM CONFIGURATION DONE **")
 ## End LLVM Configuration ##
 
 # enable verbose makefiles during development
