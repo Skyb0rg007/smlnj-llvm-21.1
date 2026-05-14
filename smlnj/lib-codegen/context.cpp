@@ -236,10 +236,13 @@ llvm::Function *Context::newFunction (
 	    name,
 	    this->_module);
 
-  // set the calling convention to our "Jump-with-arguments" convention
+    // ensure that function addresses are at least 8-byte aligned
+    fn->setAlignment (llvm::Align(8));
+
+    // set the calling convention to our "Jump-with-arguments" convention
     fn->setCallingConv (llvm::CallingConv::JWA);
 
-  // assign attributes to the function
+    // assign attributes to the function
     fn->addFnAttr (llvm::Attribute::NoUnwind);
 
     return fn;
