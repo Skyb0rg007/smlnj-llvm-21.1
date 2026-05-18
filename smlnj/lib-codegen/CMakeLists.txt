@@ -31,7 +31,8 @@ if (SMLNJ_DEBUG_CODEGEN)
 endif()
 
 target_compile_options(CFGCodeGen PRIVATE -fno-exceptions -fno-rtti)
-target_include_directories(CFGCodeGen PRIVATE
+target_include_directories(CFGCodeGen PUBLIC
+  ${SMLNJ_LLVM_SOURCE_DIR}/smlnj/include
   ${SMLNJ_LLVM_BINARY_DIR}/smlnj/include
   ${SMLNJ_LLVM_BINARY_DIR}/llvm/include
   ${SMLNJ_LLVM_SOURCE_DIR}/llvm/include)

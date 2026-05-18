@@ -37,12 +37,12 @@ if (PROJECT_IS_TOP_LEVEL)
   set(CMAKE_CXX_STANDARD 17 CACHE STRING "C++ standard to conform to")
   set(CMAKE_CXX_STANDARD_REQUIRED YES)
 
-  # root binary and source directories for the SML/NJ LLVM Library
-  #
-  set (SMLNJ_LLVM_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-  set (SMLNJ_LLVM_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
-
 endif(PROJECT_IS_TOP_LEVEL)
+
+# root binary and source directories for the SML/NJ LLVM Library
+#
+set (SMLNJ_LLVM_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set (SMLNJ_LLVM_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 # build options
 #
@@ -50,6 +50,8 @@ option (SMLNJ_CFGC_BUILD
   "Enable building the cfgc command-line tool" OFF)
 option (SMLNJ_DEBUG_CODEGEN
   "Enable debug messages in the code-generator library" OFF)
+option (SMLNJ_GENERATE_CONFIG_HEADER
+  "Generate the config.h file" ${PROJECT_IS_TOP_LEVEL})
 
 # LLVM uses "all" for all supported architectures, but we only support 2
 if(NOT LLVM_TARGETS_TO_BUILD OR LLVM_TARGETS_TO_BUILD STREQUAL "all")

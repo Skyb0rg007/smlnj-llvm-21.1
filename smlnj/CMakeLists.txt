@@ -7,7 +7,7 @@
 # When the project is not a sub-project, generate a placeholder
 # "smlnj/config.h" file
 #
-if(PROJECT_IS_TOP_LEVEL)
+if(SMLNJ_GENERATE_CONFIG_HEADER)
 
   # workaround for older versions of CMake
   #
@@ -63,7 +63,7 @@ if(PROJECT_IS_TOP_LEVEL)
   # arrange for the config.h file to be installed
   install(DIRECTORY ${include_dir} TYPE INCLUDE)
 
-else() # NOT PROJECT_IS_TOP_LEVEL
+else() # NOT SMLNJ_GENERATE_CONFIG_HEADER
 
   # when we are building the code-generator library as a sub-project, we need
   # to specify where to find the SML/NJ config.h file.
