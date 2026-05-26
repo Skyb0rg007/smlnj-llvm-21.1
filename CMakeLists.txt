@@ -60,7 +60,7 @@ endif()
 
 ## Begin LLVM Configuration ##
 message(VERBOSE "** START LLVM CONFIGURATION **")
-add_subdirectory(llvm EXCLUDE_FROM_ALL)
+add_subdirectory(llvm)
 message(VERBOSE "** LLVM CONFIGURATION DONE **")
 ## End LLVM Configuration ##
 
