@@ -13,6 +13,7 @@ set(SRCS
   cfg.cpp
   cm-registers.cpp
   context.cpp
+  c-types-codegen.cpp
   lambda-var.cpp
   mc-gen.cpp
   object-file.cpp

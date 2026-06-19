@@ -18,6 +18,8 @@ namespace CTypes {
         virtual ~c_type ();
         // pickler method suppressed
         static c_type * read (asdl::instream & is);
+        virtual llvm::Type *toLLVM (smlnj::cfgcg::Context *cxt) = 0;
+        bool isVoid () const { return this->_tag == _con_C_void; }
       protected:
         enum _tag_t {
             _con_C_void = 1,
@@ -46,6 +48,8 @@ namespace CTypes {
             return new C_void;
         }
         // pickler method suppressed
+        llvm::Type *toLLVM (smlnj::cfgcg::Context *cxt);
+
     };
     struct C_float : public c_type {
         C_float ()
@@ -57,6 +61,8 @@ namespace CTypes {
             return new C_float;
         }
         // pickler method suppressed
+        llvm::Type *toLLVM (smlnj::cfgcg::Context *cxt);
+
     };
     struct C_double : public c_type {
         C_double ()
@@ -68,6 +74,8 @@ namespace CTypes {
             return new C_double;
         }
         // pickler method suppressed
+        llvm::Type *toLLVM (smlnj::cfgcg::Context *cxt);
+
     };
     struct C_long_double : public c_type {
         C_long_double ()
@@ -79,6 +87,8 @@ namespace CTypes {
             return new C_long_double;
         }
         // pickler method suppressed
+        llvm::Type *toLLVM (smlnj::cfgcg::Context *cxt);
+
     };
     class C_unsigned : public c_type {
       public:
@@ -99,6 +109,8 @@ namespace CTypes {
         {
             this->_v0 = v;
         }
+        llvm::Type *toLLVM (smlnj::cfgcg::Context *cxt);
+
       private:
         c_int _v0;
     };
@@ -121,6 +133,8 @@ namespace CTypes {
         {
             this->_v0 = v;
         }
+        llvm::Type *toLLVM (smlnj::cfgcg::Context *cxt);
+
       private:
         c_int _v0;
     };
@@ -134,6 +148,8 @@ namespace CTypes {
             return new C_PTR;
         }
         // pickler method suppressed
+        llvm::Type *toLLVM (smlnj::cfgcg::Context *cxt);
+
     };
     class C_ARRAY : public c_type {
       public:
@@ -162,6 +178,8 @@ namespace CTypes {
         {
             this->_v1 = v;
         }
+        llvm::Type *toLLVM (smlnj::cfgcg::Context *cxt);
+
       private:
         c_type * _v0;
         int _v1;
@@ -185,6 +203,8 @@ namespace CTypes {
         {
             this->_v0 = v;
         }
+        llvm::Type *toLLVM (smlnj::cfgcg::Context *cxt);
+
       private:
         std::vector<c_type *> _v0;
     };
@@ -207,6 +227,8 @@ namespace CTypes {
         {
             this->_v0 = v;
         }
+        llvm::Type *toLLVM (smlnj::cfgcg::Context *cxt);
+
       private:
         std::vector<c_type *> _v0;
     };
@@ -252,6 +274,7 @@ namespace CTypes {
         {
             this->_v_paramTys = v;
         }
+        llvm::FunctionType *toLLVM (smlnj::cfgcg::Context *cxt);
       private:
         calling_convention _v_conv;
         c_type * _v_retTy;

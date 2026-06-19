@@ -414,6 +414,28 @@ namespace CFG {
     void RCC::codegen (smlnj::cfgcg::Context *cxt)
     {
 	assert (false && "RCC not yet implemented"); /* TODO */
+
+/*
+        bool _v_reentrant;
+        std::string _v_linkage;
+        CTypes::c_proto * _v_proto;
+        std::vector<exp *> _v_args;
+        std::vector<param *> _v_results;
+        std::vector<param *> _v_live;
+*/
+
+        if (this->_v_results.size() == 0) {
+            assert (this->_v_proto->get_retTy()->isVoid() && "expected void return type");
+        } else if (this->_v_results.size() == 1) {
+//             this->_v_results[0]->bind(
+//                 cxt,
+//                 cxt->CreateCall (...));
+        } else {
+        }
+
+      // compile continuation
+        this->_v_k->codegen (cxt);
+
     } // RCC::codegen
 
 
