@@ -415,25 +415,32 @@ namespace CFG {
     {
 	assert (false && "RCC not yet implemented"); /* TODO */
 
-/*
-        bool _v_reentrant;
-        std::string _v_linkage;
-        CTypes::c_proto * _v_proto;
-        std::vector<exp *> _v_args;
-        std::vector<param *> _v_results;
-        std::vector<param *> _v_live;
-*/
+        // code to evaluate the C function
+        llvm::Value *fn = this->_v_cfn->codegen(cxt);
 
-        if (this->_v_results.size() == 0) {
-            assert (this->_v_proto->get_retTy()->isVoid() && "expected void return type");
-        } else if (this->_v_results.size() == 1) {
-//             this->_v_results[0]->bind(
-//                 cxt,
-//                 cxt->CreateCall (...));
-        } else {
+        // get the function's type
+        llvm::FunctionType *fnTy = this->_v_proto->toLLVM(cxt);
+
+        // code to evaluate the function arguments
+        Args_t args;
+        args.reserve(this->_v_args.size());
+        for (auto it : this->_v_args) {
+            args.push_back (it->codegen(cxt));
         }
 
-      // compile continuation
+        if (this->_v_results.size() == 0) {
+            assert (this->_v_proto->get_retTy()->isVoid()
+                && "expected void return type");
+            cxt->createCCall (fnTy, fn, args);
+        } else if (this->_v_results.size() == 1) {
+            this->_v_results[0]->bind(
+                cxt,
+                cxt->createCCall (fnTy, fn, args));
+        } else {
+            assert (false && "multi-result C calls not yet supported");
+        }
+
+      // compile the continuation
         this->_v_k->codegen (cxt);
 
     } // RCC::codegen

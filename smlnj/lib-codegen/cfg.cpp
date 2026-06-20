@@ -606,12 +606,13 @@ namespace CFG {
                 auto freentrant = asdl::read_bool(is);
                 auto flinkage = asdl::read_string(is);
                 auto fproto = CTypes::c_proto::read(is);
+                auto fcfn = exp::read(is);
                 auto fargs = read_exp_seq(is);
                 auto fresults = read_param_seq(is);
                 auto flive = read_param_seq(is);
                 auto fk = stm::read(is);
-                return RCC::make(freentrant, flinkage, fproto, fargs, fresults, flive,
-                    fk);
+                return RCC::make(freentrant, flinkage, fproto, fcfn, fargs, fresults,
+                    flive, fk);
             }
           default:
             is.invalidTag(static_cast<unsigned int>(tag), "stm");
@@ -701,6 +702,7 @@ namespace CFG {
     RCC::~RCC ()
     {
         delete this->_v_proto;
+        delete this->_v_cfn;
         for (auto item : this->_v_args) {
             delete item;
         }

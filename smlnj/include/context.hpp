@@ -696,6 +696,13 @@ class Context : public llvm::LLVMContext {
         return call;
     }
 
+    /// create a C function call
+    llvm::CallInst *createCCall (llvm::FunctionType *fnTy, llvm::Value *fn, Args_t const &args)
+    {
+        llvm::CallInst *call = this->_builder.CreateCall(fnTy, fn, args);
+        return call;
+    }
+
     llvm::Value *createExtractValue (llvm::Value *v, int i)
     {
         return this->_builder.CreateExtractValue (v, i);

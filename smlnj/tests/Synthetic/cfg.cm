@@ -7,7 +7,7 @@
 Library
 
   signature CFGPICKLE
-  signature CFG__PRIM_PICKLE
+  signature CFG_PRIM_PICKLE
   signature CTYPES_PICKLE
 
   structure CFG

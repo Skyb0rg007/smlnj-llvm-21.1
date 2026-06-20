@@ -45,7 +45,8 @@ structure Ex12 =
                             retTy = CTy.C_double,
                             paramTys = [CTy.C_double, CTy.C_double]
                           },
-                        args = [V 190, V 189, V 188],
+                        cfn = V 190,
+                        args = [V 189, V 188],
                         results = [mkParam(v 200, f64Ty)],
                         live = [],
                         k = C.THROW(V 194,

@@ -85,7 +85,8 @@ llvm::Type *C_UNION::toLLVM (smlnj::cfgcg::Context *cxt)
 
 llvm::FunctionType *c_proto::toLLVM (smlnj::cfgcg::Context *cxt)
 {
-    std::vector<llvm::Type *> paramTys(this->_v_paramTys.size());
+    Types_t paramTys;
+    paramTys.reserve(this->_v_paramTys.size());
 
     for (auto it : this->_v_paramTys) {
         paramTys.push_back (it->toLLVM(cxt));

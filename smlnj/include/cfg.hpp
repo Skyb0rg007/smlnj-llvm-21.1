@@ -2256,16 +2256,16 @@ namespace CFG {
     };
     class RCC : public stm {
       public:
-        RCC (bool p_reentrant, std::string const & p_linkage, CTypes::c_proto * p_proto, std::vector<exp *> const & p_args, std::vector<param *> const & p_results, std::vector<param *> const & p_live, stm * p_k)
+        RCC (bool p_reentrant, std::string const & p_linkage, CTypes::c_proto * p_proto, exp * p_cfn, std::vector<exp *> const & p_args, std::vector<param *> const & p_results, std::vector<param *> const & p_live, stm * p_k)
           : stm(stm::_con_RCC), _v_reentrant(p_reentrant), _v_linkage(p_linkage),
-              _v_proto(p_proto), _v_args(p_args), _v_results(p_results), _v_live(p_live),
-              _v_k(p_k)
+              _v_proto(p_proto), _v_cfn(p_cfn), _v_args(p_args), _v_results(p_results),
+              _v_live(p_live), _v_k(p_k)
         { }
         ~RCC ();
-        static RCC * make (bool p_reentrant, std::string const & p_linkage, CTypes::c_proto * p_proto, std::vector<exp *> const & p_args, std::vector<param *> const & p_results, std::vector<param *> const & p_live, stm * p_k)
+        static RCC * make (bool p_reentrant, std::string const & p_linkage, CTypes::c_proto * p_proto, exp * p_cfn, std::vector<exp *> const & p_args, std::vector<param *> const & p_results, std::vector<param *> const & p_live, stm * p_k)
         {
-            return new RCC(p_reentrant, p_linkage, p_proto, p_args, p_results, p_live,
-                p_k);
+            return new RCC(p_reentrant, p_linkage, p_proto, p_cfn, p_args, p_results,
+                p_live, p_k);
         }
         // pickler method suppressed
         bool get_reentrant () const
@@ -2291,6 +2291,14 @@ namespace CFG {
         void set_proto (CTypes::c_proto * v)
         {
             this->_v_proto = v;
+        }
+        exp * get_cfn () const
+        {
+            return this->_v_cfn;
+        }
+        void set_cfn (exp * v)
+        {
+            this->_v_cfn = v;
         }
         std::vector<exp *> get_args () const
         {
@@ -2332,6 +2340,7 @@ namespace CFG {
         bool _v_reentrant;
         std::string _v_linkage;
         CTypes::c_proto * _v_proto;
+        exp * _v_cfn;
         std::vector<exp *> _v_args;
         std::vector<param *> _v_results;
         std::vector<param *> _v_live;
