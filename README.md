@@ -54,29 +54,37 @@ The important properties of the JWA runtime model are
 
 * All arguments are passed in hardware registers.
 
-## Organzation
+## Organization
 
 * `build-llvm.sh` &mdash; shell script for configuring and building the LLVM tools
   and libraries.
 
-* `cfgc` &mdash; source code for a tool that compiles the **SML/NJ** CFG IR pickles
-  to target code.  This tool is used to debug the **SML/NJ** backend; it is not
-  part of the code generation pipeline.
+* `CMakeLists.txt` &mdash; the top-level CMake configuration for the project; see
+  [Building and Using with CMake](#building-and-using-with-cmake) below.
 
-* `cfgc/LICENSE` &mdash; the license for the code in the `cfgc` sub-directory.
+* `CMakePresets.json` &mdash; CMake presets for developers (*e.g.*, debug builds).
+  The `build-llvm.sh` script uses these presets.
 
 * `cmake` &mdash; **LLVM**'s common CMake modules; see `cmake/README.rst` for details.
 
 * `llvm` &mdash; the main **LLVM** source directory.
 
-* `llvm/CMakePresets.json` &mdash; CMake presets that customize the configuration and
-  build process.  This file is **not** part of the standard LLVM sources.
-
 * `llvm/LICENSE.TXT` &mdash; the **LLVM** source code license, which covers the code in the
   `cmake` and `llvm` sub-directories.
 
 * `LLVM-VERSION` &mdash; specifies the version of **LLVM** that this source tree is
-  derived from (which is 21.1.7).
+  derived from (which is 21.1.7).  The CMake project version is taken from this file.
+
+* `smlnj` &mdash; the **SML/NJ** code-generation library (`CFGCodeGen`), the
+  heap-image to object-file library (`Heap2Obj`), the `heap2obj` and `cfgc`
+  tools, and the CMake support files for the project; see `smlnj/README.md`.
+
+* `smlnj/cfgc` &mdash; source code for a tool that compiles the **SML/NJ** CFG IR pickles
+  to target code.  This tool is used to debug the **SML/NJ** backend; it is not
+  part of the code generation pipeline.
+
+* `smlnj/cmake` &mdash; the CMake support files for the **SML/NJ** parts of the project
+  (LLVM configuration settings and the `smlnj-llvm` package generation).
 
 * `third-party` &mdash; third-party dependencies used in various components of **LLVM**.
   We only need the `siphash` header file from this tree, so the other components have
@@ -84,13 +92,108 @@ The important properties of the JWA runtime model are
 
 The `build-llvm.sh` script will produce several additional directories:
 
-* `bin` &mdash; **LLVM** executables (*e.g.*, `llc`)
+* `bin` &mdash; **LLVM** executables (*e.g.*, `llc`) and the `heap2obj` tool
 
-* `build` &mdash; the directory used to compile the LLM tools and libraries
+* `build` &mdash; the directory used to compile the LLVM tools and libraries
 
-* `include` &mdash; **LLVM** include files
+* `include` &mdash; **LLVM** and **SML/NJ** include files
 
-* `lib` &mdash; **LLVM** libraries
+* `lib` &mdash; **LLVM** and **SML/NJ** libraries, and the CMake packages
+  (`lib/cmake/llvm` and `lib/cmake/smlnj-llvm`)
+
+## Building and Using with CMake
+
+This repository is a self-contained CMake project (`smlnj-llvm`) that builds
+the patched **LLVM** libraries together with the **SML/NJ** libraries and tools.
+It can be used in three ways.
+
+### As a standalone project
+
+This is what the `build-llvm.sh` script does.  Configuring and building the
+project installs the **LLVM** libraries and headers, the `CFGCodeGen` and `Heap2Obj`
+libraries and their headers, the `heap2obj` tool, and CMake packages for both
+**LLVM** and `smlnj-llvm`.
+
+``` bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/path/to/install
+cmake --build build --target install
+```
+
+A build type must be specified (**LLVM** refuses to configure without one);
+the presets in `CMakePresets.json` (used by `build-llvm.sh`) specify it.
+
+The configuration options are:
+
+* `LLVM_TARGETS_TO_BUILD` &mdash; the code-generation targets to enable, which is a
+  subset of `X86;AArch64`, `all`, or `host` (the target for the system that is
+  being built for).  The default is `host`.
+
+* `SMLNJ_CFGC_BUILD` &mdash; build (and install) the `cfgc` tool (default `OFF`).
+
+* `SMLNJ_DEBUG_CODEGEN` &mdash; enable debug messages in the code-generator library
+  (default `OFF`).
+
+* `SMLNJ_LLVM_INSTALL` &mdash; generate install rules and the CMake package (default
+  `ON` when this is the top-level project and `OFF` when it is a sub-project).
+
+The **LLVM** settings that **SML/NJ** requires (or does not need) are applied by
+`smlnj/cmake/LLVMSettings.cmake`; the ones that disable unused components can
+be overridden on the command line.  Other **LLVM** options (*e.g.*,
+`LLVM_ENABLE_ASSERTIONS` or `LLVM_USE_SANITIZER`) can be specified as usual.
+
+### As an installed package
+
+A client project can use an installed copy of the project via `find_package`:
+
+``` cmake
+find_package(smlnj-llvm CONFIG REQUIRED)
+target_link_libraries(my-runtime PRIVATE smlnj-llvm::CFGCodeGen)
+```
+
+The package can be located by setting `CMAKE_PREFIX_PATH` to the installation
+prefix, or by setting `smlnj-llvm_DIR` to `<prefix>/lib/cmake/smlnj-llvm`.
+The package loads the **LLVM** package that was installed with it, so a
+stock **LLVM** installation is never picked up by mistake.  The build tree
+also contains a usable package in `build/lib/cmake/smlnj-llvm`, which can
+be used to develop against the project without installing it.
+
+### As a sub-project
+
+A client project can also build the project as part of its own build using
+`add_subdirectory` (or `FetchContent`):
+
+``` cmake
+set(LLVM_TARGETS_TO_BUILD X86)
+add_subdirectory(path/to/smlnj-llvm)
+target_link_libraries(my-runtime PRIVATE smlnj-llvm::CFGCodeGen)
+```
+
+In this mode, only the parts of **LLVM** that the **SML/NJ** libraries depend
+on are built, and no install rules are generated (unless `SMLNJ_LLVM_INSTALL`
+is set to `ON`).
+
+### The targets
+
+In all three modes, the following targets are available; the library targets
+carry their usage requirements (include directories, C++ standard, and the
+**LLVM** component libraries that they depend on).
+
+* `smlnj-llvm::CFGCodeGen` &mdash; the CFG code-generation library (static)
+
+* `smlnj-llvm::Heap2Obj` &mdash; the heap-image to object-file library (static)
+
+* `smlnj-llvm::LLVMHeaders` &mdash; the usage requirements of code that includes the
+  **LLVM** headers (include directories and C++ standard); the libraries above
+  depend on it, so clients only need it to use **LLVM** directly
+
+* `smlnj-llvm::heap2obj` &mdash; the `heap2obj` command-line tool
+
+* `smlnj-llvm::cfgc` &mdash; the `cfgc` tool (when `SMLNJ_CFGC_BUILD` is on)
+
+The package also defines the variables `SMLNJ_LLVM_VERSION` and
+`SMLNJ_LLVM_TARGETS` (the enabled code-generation targets), and the usual
+**LLVM** variables (*e.g.*, `LLVM_TARGETS_TO_BUILD`), since the **LLVM** package
+is loaded as a dependency.
 
 ## History
 
@@ -137,8 +240,12 @@ rm -rf benchmarks bindings examples test unittests
 The **LLVM** project has many tools and components that we do not use
 (*e.g.*, the components that we prune from the source).   Therefore, we
 need to specify a large number of CMake variables to disable
-these components.  We add the file `src/CMakePresets.json` and use CMake's
-`--presets` option to simplify the configuration of the system.
+these components.  These settings live in `smlnj/cmake/LLVMSettings.cmake`,
+which is included by the top-level `CMakeLists.txt` before the **LLVM**
+sources are configured, so that they apply no matter how the project is
+consumed (see [Building and Using with CMake](#building-and-using-with-cmake)).
+The `CMakePresets.json` file only holds developer-facing presets
+(*e.g.*, debug and release builds).
 
 ## Patching LLVM
 

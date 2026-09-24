@@ -3,46 +3,62 @@
 # COPYRIGHT (c) 2025 The Fellowship of SML/NJ (https://www.smlnj.org)
 # All rights reserved.
 #
+# This project can be consumed in three different ways:
+#
+#   1. As a standalone project (e.g., via the build-llvm.sh script).  This
+#      builds and installs LLVM, the CFGCodeGen and Heap2Obj libraries, and
+#      the heap2obj tool, along with a CMake package so that clients can use
+#      `find_package(smlnj-llvm CONFIG)`.
+#
+#   2. As a sub-project via `add_subdirectory()` or `FetchContent`.  In this
+#      mode, only the parts of LLVM that are needed by the SML/NJ libraries
+#      are built and no install rules are generated (see SMLNJ_LLVM_INSTALL).
+#
+#   3. As an installed package via `find_package(smlnj-llvm CONFIG)`.
+#
+# In all cases, clients should use the namespaced targets:
+#
+#   smlnj-llvm::CFGCodeGen      -- the CFG code-generation library
+#   smlnj-llvm::Heap2Obj        -- the heap-image to object-file library
+#   smlnj-llvm::heap2obj        -- the heap2obj command-line tool
+#   smlnj-llvm::cfgc            -- the cfgc tool (only when SMLNJ_CFGC_BUILD is on)
+#
+# The library targets carry their usage requirements (include directories and
+# the LLVM component libraries that they depend on), so clients only have to
+# link against them.
+#
 
-# LLVM 21.1 requires 3.20, but we require a more recent version
+# LLVM 21.1 requires 3.20, but we require a more recent version for
+# target_sources(FILE_SET)
 #
 cmake_minimum_required(VERSION 3.23.0)
 
+# the version of this project tracks the version of LLVM that it is derived from
+#
+file(STRINGS "${CMAKE_CURRENT_LIST_DIR}/LLVM-VERSION" SMLNJ_LLVM_VERSION LIMIT_COUNT 1)
+string(STRIP "${SMLNJ_LLVM_VERSION}" SMLNJ_LLVM_VERSION)
+
 project(smlnj-llvm
-  VERSION 21.1.6
-  DESCRIPTION "LLVM 21.1.6 with modifications to support SML/NJ"
+  VERSION ${SMLNJ_LLVM_VERSION}
+  DESCRIPTION "LLVM ${SMLNJ_LLVM_VERSION} with modifications to support SML/NJ"
   HOMEPAGE_URL https://smlnj.org
   LANGUAGES C CXX)
+
+include(GNUInstallDirs)
 
 # more checks for when we are building the LLVM stuff as a standalone project
 #
 if (PROJECT_IS_TOP_LEVEL)
 
   # Disable builds in the source tree to prevent corruption.
-  if ("${CMAKE_SOURCE_DIR}" STREQUAL " ${CMAKE_BINARY_DIR}")
+  if ("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
     message(FATAL_ERROR "
   ERROR: builds in the source tree are not allowed.
          Create a separate directory for build files.
 ")
   endif()
 
-  # check the build type
-  if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-    message(STATUS "No build type selected, default to Release")
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type (default Release)" FORCE)
-  endif()
-
-  # LLVM 18.1 uses C++17
-  #
-  set(CMAKE_CXX_STANDARD 17 CACHE STRING "C++ standard to conform to")
-  set(CMAKE_CXX_STANDARD_REQUIRED YES)
-
 endif(PROJECT_IS_TOP_LEVEL)
-
-# root binary and source directories for the SML/NJ LLVM Library
-#
-set (SMLNJ_LLVM_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-set (SMLNJ_LLVM_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 # build options
 #
@@ -50,22 +66,94 @@ option (SMLNJ_CFGC_BUILD
   "Enable building the cfgc command-line tool" OFF)
 option (SMLNJ_DEBUG_CODEGEN
   "Enable debug messages in the code-generator library" OFF)
-option (SMLNJ_GENERATE_CONFIG_HEADER
-  "Generate the config.h file" ${PROJECT_IS_TOP_LEVEL})
+option (SMLNJ_LLVM_INSTALL
+  "Generate install rules (and the CMake package) for LLVM and the SML/NJ libraries and tools"
+  ${PROJECT_IS_TOP_LEVEL})
 
-# LLVM uses "all" for all supported architectures, but we only support 2
-if(NOT LLVM_TARGETS_TO_BUILD OR LLVM_TARGETS_TO_BUILD STREQUAL "all")
-    set(LLVM_TARGETS_TO_BUILD "X86;AArch64")
+# The LLVM code-generation targets to build.  As in LLVM, "host" means the
+# target for the system that we are building for (the default) and "all"
+# means all of the supported targets, but we only support two.
+#
+set(SMLNJ_LLVM_ALL_TARGETS "AArch64;X86")
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64)$")
+  set(SMLNJ_LLVM_HOST_TARGET X86)
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64|ARM64)$")
+  set(SMLNJ_LLVM_HOST_TARGET AArch64)
+else()
+  message(FATAL_ERROR "unsupported architecture ${CMAKE_SYSTEM_PROCESSOR}")
 endif()
+set(LLVM_TARGETS_TO_BUILD "host" CACHE STRING
+  "Semicolon-separated list of LLVM targets to build (subset of ${SMLNJ_LLVM_ALL_TARGETS}), \"host\", or \"all\"")
+if (LLVM_TARGETS_TO_BUILD STREQUAL "all")
+  set(LLVM_TARGETS_TO_BUILD "${SMLNJ_LLVM_ALL_TARGETS}")
+elseif (LLVM_TARGETS_TO_BUILD STREQUAL "host")
+  set(LLVM_TARGETS_TO_BUILD "${SMLNJ_LLVM_HOST_TARGET}")
+endif()
+foreach(T IN LISTS LLVM_TARGETS_TO_BUILD)
+  if (NOT T IN_LIST SMLNJ_LLVM_ALL_TARGETS)
+    message(FATAL_ERROR "unsupported LLVM target '${T}'; supported targets are ${SMLNJ_LLVM_ALL_TARGETS}")
+  endif()
+endforeach()
+message(STATUS "LLVM targets: ${LLVM_TARGETS_TO_BUILD}")
+
+# LLVM configuration settings that are required by (or irrelevant to) SML/NJ
+#
+include(smlnj/cmake/LLVMSettings.cmake)
 
 ## Begin LLVM Configuration ##
 message(VERBOSE "** START LLVM CONFIGURATION **")
-add_subdirectory(llvm)
+if (SMLNJ_LLVM_INSTALL)
+  add_subdirectory(llvm)
+else()
+  # only build the parts of LLVM that our libraries depend on; this also
+  # suppresses the LLVM install rules.
+  add_subdirectory(llvm EXCLUDE_FROM_ALL)
+endif()
 message(VERBOSE "** LLVM CONFIGURATION DONE **")
 ## End LLVM Configuration ##
 
-
-# The CFG Code Generation Library
+# The usage requirements of code that uses the LLVM headers, which the LLVM
+# library targets do not carry: the include directories (the LLVM sources
+# and the headers generated by tablegen, which must be generated first) and
+# the C++ standard.  In the install tree, the LLVM headers are installed in
+# the same include directory as ours, so the include directories are only
+# needed in the build tree.  This target is exported (as
+# smlnj-llvm::LLVMHeaders), since our libraries depend on it publicly.
 #
-include_directories(include)
+add_library(smlnj-llvm-headers INTERFACE)
+add_library(smlnj-llvm::LLVMHeaders ALIAS smlnj-llvm-headers)
+set_target_properties(smlnj-llvm-headers PROPERTIES EXPORT_NAME LLVMHeaders)
+target_include_directories(smlnj-llvm-headers INTERFACE
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/llvm/include>"
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/llvm/include>")
+target_compile_features(smlnj-llvm-headers INTERFACE cxx_std_17)
+add_dependencies(smlnj-llvm-headers llvm-headers)
+
+# The compilation options of our libraries and tools, which must match how
+# LLVM itself is compiled.  The libraries link this target privately, so it
+# is exported (as smlnj-llvm::CXXOptions) as a link-only dependency, and the
+# options do not propagate to clients.
+#
+add_library(smlnj-llvm-cxx-options INTERFACE)
+set_target_properties(smlnj-llvm-cxx-options PROPERTIES EXPORT_NAME CXXOptions)
+target_compile_options(smlnj-llvm-cxx-options INTERFACE -fno-exceptions -fno-rtti)
+
+if (SMLNJ_LLVM_INSTALL)
+  install(TARGETS smlnj-llvm-headers smlnj-llvm-cxx-options EXPORT smlnj-llvmTargets)
+endif()
+
+# The installation directories; these mirror LLVM's choices so that our
+# libraries and CMake package live next to LLVM's.
+#
+set(SMLNJ_LLVM_INSTALL_LIBDIR "lib${LLVM_LIBDIR_SUFFIX}")
+set(SMLNJ_LLVM_INSTALL_CMAKEDIR "${CMAKE_INSTALL_PACKAGEDIR}/smlnj-llvm")
+
+# The CFG Code Generation Library and tools
+#
 add_subdirectory(smlnj)
+
+# The CMake package
+#
+if (SMLNJ_LLVM_INSTALL)
+  include(smlnj/cmake/Package.cmake)
+endif()

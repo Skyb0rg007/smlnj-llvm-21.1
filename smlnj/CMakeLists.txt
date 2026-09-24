@@ -4,76 +4,57 @@
 # All rights reserved.
 #
 
-# When the project is not a sub-project, generate a placeholder
-# "smlnj/config.h" file
+## Generate the "smlnj/config.h" header
 #
-if(SMLNJ_GENERATE_CONFIG_HEADER)
+# This header is private to the libraries and tools in this directory; it
+# is neither installed nor part of the public interface of the libraries.
+#
 
-  # workaround for older versions of CMake
-  #
-  if (CMAKE_VERSION VERSION_LESS 3.25)
-    if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-      set(LINUX ON CACHE BOOL "Set to true when the target system is Linux" INTERNAL)
-    endif()
-  endif()
-
-  # determine the operating system
-  #
-  if (APPLE)
-    set(SMLNJ_OPSYS_DARWIN ON)
-  elseif (LINUX)
-    set(SMLNJ_OPSYS_LINUX ON)
-  else ()
-    message(FATAL_ERROR "unsupported operating system")
-  endif()
-
-  # determine the archicture
-  #
-  if (CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "x86_64")
-    set(SMLNJ_ARCH_AMD64 ON)
-  elseif (CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
-    set(SMLNJ_ARCH_ARM64 ON)
-  else ()
-    message(FATAL_ERROR "unsupported architecture ${CMAKE_HOST_SYSTEM_PROCESSOR}")
-  endif()
-
-  # determine the enabled targets
-  #
-  foreach(T IN LISTS LLVM_TARGETS_TO_BUILD)
-    if(T STREQUAL "X86")
-      message(STATUS "enable X86 target")
-      set(SMLNJ_ENABLE_X86 ON)
-    elseif(T STREQUAL "AArch64")
-      message(STATUS "enable ARM64 target")
-      set(SMLNJ_ENABLE_ARM64 ON)
-    else()
-      message(FATAL_ERROR "unknown target architecture ${T}")
-    endif()
-  endforeach()
-
-  set(include_dir ${CMAKE_CURRENT_BINARY_DIR}/include/smlnj)
-
-  # generate the config.h file
-  #
-  configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/config/config.h.cmake
-    ${include_dir}/config.h
-    @ONLY)
-
-  # arrange for the config.h file to be installed
-  install(DIRECTORY ${include_dir} TYPE INCLUDE)
-
-else() # NOT SMLNJ_GENERATE_CONFIG_HEADER
-
-  # when we are building the code-generator library as a sub-project, we need
-  # to specify where to find the SML/NJ config.h file.
-  #
-  include_directories(BEFORE ${CMAKE_BINARY_DIR}/src/include)
-
+# determine the operating system
+#
+if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  set(SMLNJ_OPSYS_DARWIN ON)
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  set(SMLNJ_OPSYS_LINUX ON)
+else ()
+  message(FATAL_ERROR "unsupported operating system ${CMAKE_SYSTEM_NAME}")
 endif()
 
-include_directories(include)
-add_subdirectory(include)
+# the architecture that we are building for (determined by the top-level
+# CMakeLists.txt file)
+#
+if (SMLNJ_LLVM_HOST_TARGET STREQUAL "X86")
+  set(SMLNJ_ARCH_AMD64 ON)
+elseif (SMLNJ_LLVM_HOST_TARGET STREQUAL "AArch64")
+  set(SMLNJ_ARCH_ARM64 ON)
+endif()
+
+# determine the enabled code-generation targets
+#
+foreach(T IN LISTS LLVM_TARGETS_TO_BUILD)
+  if(T STREQUAL "X86")
+    message(STATUS "enable X86 target")
+    set(SMLNJ_ENABLE_X86 ON)
+  elseif(T STREQUAL "AArch64")
+    message(STATUS "enable ARM64 target")
+    set(SMLNJ_ENABLE_ARM64 ON)
+  else()
+    message(FATAL_ERROR "unknown target architecture ${T}")
+  endif()
+endforeach()
+
+# the directory that holds the generated header; the libraries and tools
+# add it to their private include paths.
+#
+set(SMLNJ_LLVM_CONFIG_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/include)
+
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/config/config.h.cmake
+  ${SMLNJ_LLVM_CONFIG_INCLUDE_DIR}/smlnj/config.h
+  @ONLY)
+
+## The libraries and tools
+#
 add_subdirectory(lib-codegen)
 add_subdirectory(lib-heap2obj)
 add_subdirectory(heap2obj)

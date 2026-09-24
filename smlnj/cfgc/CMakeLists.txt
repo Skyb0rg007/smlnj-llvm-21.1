@@ -4,20 +4,18 @@
 # All rights reserved.
 #
 
-# determine the LLVM libraries
-llvm_map_components_to_libnames(LLVM_LIBS ${LLVM_TARGETS_TO_BUILD} passes runtimedyld)
-
 set(SRCS
   main.cpp)
 
 add_executable(cfgc ${SRCS})
-add_dependencies(cfgc CFGCodeGen)
+add_executable(smlnj-llvm::cfgc ALIAS cfgc)
 
-target_compile_options(cfgc PRIVATE -fno-exceptions -fno-rtti)
-#target_compile_definitions(cfgc PRIVATE ${OPSYS} ${ARCH})
-target_include_directories(cfgc PRIVATE
-  ${SMLNJ_LLVM_BINARY_DIR}/smlnj/include
-  ${SMLNJ_LLVM_BINARY_DIR}/llvm/include ${SMLNJ_LLVM_SOURCE_DIR}/llvm/include)
-target_link_libraries(cfgc CFGCodeGen ${LLVM_LIBS})
+target_link_libraries(cfgc PRIVATE smlnj-llvm-cxx-options)
+target_include_directories(cfgc PRIVATE ${SMLNJ_LLVM_CONFIG_INCLUDE_DIR})
+target_link_libraries(cfgc PRIVATE smlnj-llvm::CFGCodeGen)
 
-install(TARGETS cfgc)
+if (SMLNJ_LLVM_INSTALL)
+  install(TARGETS cfgc
+    EXPORT smlnj-llvmTargets
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()

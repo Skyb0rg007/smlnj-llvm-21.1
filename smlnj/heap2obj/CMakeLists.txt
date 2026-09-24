@@ -4,26 +4,17 @@
 # All rights reserved.
 #
 
-if(${SMLNJ_ARCH_AMD64})
-  set(target_arch X86)
-elseif (${SMLNJ_ARCH_ARM64})
-  set(target_arch AArch64)
-endif()
-
-# determine the LLVM libraries
-llvm_map_components_to_libnames(LLVM_LIBS ${LLVM_TARGETS_TO_BUILD})
-
 set(SRCS
   main.cpp)
 
 add_executable(heap2obj ${SRCS})
-add_dependencies(heap2obj Heap2Obj)
+add_executable(smlnj-llvm::heap2obj ALIAS heap2obj)
 
-target_compile_options(heap2obj PRIVATE -fno-exceptions -fno-rtti)
-target_include_directories(heap2obj PRIVATE
-  ${SMLNJ_LLVM_SOURCE_DIR}/smlnj/include
-  ${SMLNJ_LLVM_BINARY_DIR}/llvm/include
-  ${SMLNJ_LLVM_SOURCE_DIR}/llvm/include)
-target_link_libraries(heap2obj Heap2Obj ${LLVM_LIBS})
+target_link_libraries(heap2obj PRIVATE smlnj-llvm-cxx-options)
+target_link_libraries(heap2obj PRIVATE smlnj-llvm::Heap2Obj)
 
-install(TARGETS heap2obj)
+if (SMLNJ_LLVM_INSTALL)
+  install(TARGETS heap2obj
+    EXPORT smlnj-llvmTargets
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()

@@ -1,0 +1,41 @@
+# CMake package configuration for smlnj-llvm @PROJECT_VERSION@
+#
+# COPYRIGHT (c) 2025 The Fellowship of SML/NJ (https://www.smlnj.org)
+# All rights reserved.
+#
+# This file is generated from smlnj/cmake/smlnj-llvmConfig.cmake.in.
+#
+# Provides the imported targets
+#
+#   smlnj-llvm::CFGCodeGen      -- the CFG code-generation library
+#   smlnj-llvm::Heap2Obj        -- the heap-image to object-file library
+#   smlnj-llvm::LLVMHeaders     -- the usage requirements of the LLVM headers
+#   smlnj-llvm::heap2obj        -- the heap2obj command-line tool
+#   smlnj-llvm::cfgc            -- the cfgc tool (if it was built)
+#   smlnj-llvm::CXXOptions      -- (internal) the compile options of the libraries
+#
+# and the variables
+#
+#   SMLNJ_LLVM_VERSION          -- the version of the package
+#   SMLNJ_LLVM_TARGETS          -- the enabled LLVM code-generation targets
+#
+
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+set(SMLNJ_LLVM_VERSION "@PROJECT_VERSION@")
+set(SMLNJ_LLVM_TARGETS "@LLVM_TARGETS_TO_BUILD@")
+
+# Our libraries link against the LLVM component libraries, which are exported
+# by the (patched) LLVM that is part of this package.  We only accept that
+# copy of LLVM; a stock LLVM does not support the JWA calling convention.
+#
+set_and_check(LLVM_DIR "@PACKAGE_SMLNJ_LLVM_LLVM_CMAKE_DIR@")
+find_dependency(LLVM CONFIG)
+
+if (NOT TARGET smlnj-llvm::CFGCodeGen)
+  include("${CMAKE_CURRENT_LIST_DIR}/smlnj-llvmTargets.cmake")
+endif()
+
+check_required_components(smlnj-llvm)
