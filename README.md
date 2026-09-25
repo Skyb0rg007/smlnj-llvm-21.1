@@ -56,14 +56,11 @@ The important properties of the JWA runtime model are
 
 ## Organization
 
-* `build-llvm.sh` &mdash; shell script for configuring and building the LLVM tools
-  and libraries.
-
 * `CMakeLists.txt` &mdash; the top-level CMake configuration for the project; see
   [Building and Using with CMake](#building-and-using-with-cmake) below.
 
-* `CMakePresets.json` &mdash; CMake presets for developers (*e.g.*, debug builds).
-  The `build-llvm.sh` script uses these presets.
+* `CMakePresets.json` &mdash; CMake presets for standalone builds (*e.g.*, debug
+  builds), which use the `build` directory.
 
 * `cmake` &mdash; **LLVM**'s common CMake modules; see `cmake/README.rst` for details.
 
@@ -90,17 +87,6 @@ The important properties of the JWA runtime model are
   We only need the `siphash` header file from this tree, so the other components have
   been removed.
 
-The `build-llvm.sh` script will produce several additional directories:
-
-* `bin` &mdash; **LLVM** executables (*e.g.*, `llc`) and the `heap2obj` tool
-
-* `build` &mdash; the directory used to compile the LLVM tools and libraries
-
-* `include` &mdash; **LLVM** and **SML/NJ** include files
-
-* `lib` &mdash; **LLVM** and **SML/NJ** libraries, and the CMake packages
-  (`lib/cmake/llvm` and `lib/cmake/smlnj-llvm`)
-
 ## Building and Using with CMake
 
 This repository is a self-contained CMake project (`smlnj-llvm`) that builds
@@ -109,18 +95,23 @@ It can be used in three ways.
 
 ### As a standalone project
 
-This is what the `build-llvm.sh` script does.  Configuring and building the
-project installs the **LLVM** libraries and headers, the `CFGCodeGen` and `Heap2Obj`
-libraries and their headers, the `heap2obj` tool, and CMake packages for both
-**LLVM** and `smlnj-llvm`.
+Configuring and building the project installs the **LLVM** libraries and
+headers, the `CFGCodeGen` and `Heap2Obj` libraries and their headers, the
+`heap2obj` tool, and CMake packages for both **LLVM** and `smlnj-llvm`
+(`lib/cmake/llvm` and `lib/cmake/smlnj-llvm`).
 
 ``` bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/path/to/install
 cmake --build build --target install
 ```
 
-A build type must be specified (**LLVM** refuses to configure without one);
-the presets in `CMakePresets.json` (used by `build-llvm.sh`) specify it.
+A build type must be specified (**LLVM** refuses to configure without one).
+The presets in `CMakePresets.json` specify it, so the following also works:
+
+``` bash
+cmake --preset smlnj-llvm-release -DCMAKE_INSTALL_PREFIX=/path/to/install
+cmake --build build --target install
+```
 
 The configuration options are:
 

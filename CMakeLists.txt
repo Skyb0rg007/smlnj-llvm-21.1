@@ -5,7 +5,7 @@
 #
 # This project can be consumed in three different ways:
 #
-#   1. As a standalone project (e.g., via the build-llvm.sh script).  This
+#   1. As a standalone project (e.g., with the presets in CMakePresets.json).  This
 #      builds and installs LLVM, the CFGCodeGen and Heap2Obj libraries, and
 #      the heap2obj tool, along with a CMake package so that clients can use
 #      `find_package(smlnj-llvm CONFIG)`.
