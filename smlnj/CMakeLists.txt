@@ -29,19 +29,15 @@ elseif (SMLNJ_LLVM_HOST_TARGET STREQUAL "AArch64")
   set(SMLNJ_ARCH_ARM64 ON)
 endif()
 
-# determine the enabled code-generation targets
+# the enabled code-generation targets (the top-level CMakeLists.txt file
+# checks that LLVM_TARGETS_TO_BUILD only contains supported targets)
 #
-foreach(T IN LISTS LLVM_TARGETS_TO_BUILD)
-  if(T STREQUAL "X86")
-    message(STATUS "enable X86 target")
-    set(SMLNJ_ENABLE_X86 ON)
-  elseif(T STREQUAL "AArch64")
-    message(STATUS "enable ARM64 target")
-    set(SMLNJ_ENABLE_ARM64 ON)
-  else()
-    message(FATAL_ERROR "unknown target architecture ${T}")
-  endif()
-endforeach()
+if ("X86" IN_LIST LLVM_TARGETS_TO_BUILD)
+  set(SMLNJ_ENABLE_X86 ON)
+endif()
+if ("AArch64" IN_LIST LLVM_TARGETS_TO_BUILD)
+  set(SMLNJ_ENABLE_ARM64 ON)
+endif()
 
 # the directory that holds the generated header; the libraries and tools
 # add it to their private include paths.

@@ -12,6 +12,7 @@
             "binaryDir" : "${sourceDir}/build",
             "cacheVariables": {
                 "CMAKE_VERBOSE_MAKEFILE" : "ON",
+                "CMAKE_EXPORT_COMPILE_COMMANDS" : "ON",
                 "CMAKE_OSX_DEPLOYMENT_TARGET" : "11"
             }
         },

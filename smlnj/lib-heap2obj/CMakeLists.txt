@@ -22,8 +22,6 @@ target_sources(Heap2Obj
     BASE_DIRS ${INCLUDE_DIR}
     FILES ${HDRS})
 
-target_compile_definitions(Heap2Obj PRIVATE "SMLNJ_TARGET_TRIPLE=\"${LLVM_HOST_TRIPLE}\"")
-
 # the public header needs C++17 (std::string_view), which the headers
 # target provides; the private include directory holds the generated
 # smlnj/config.h
