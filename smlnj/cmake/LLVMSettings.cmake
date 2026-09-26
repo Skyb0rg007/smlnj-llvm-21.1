@@ -13,6 +13,14 @@
 #
 set(LLVM_ENABLE_DUMP ON)
 
+# Programs that must not be installed.  LLVM builds llvm-tblgen to generate
+# some of its sources, but only installs it when LLVM_BUILD_UTILS is on; if
+# it is installed, then LLVM's CMake package refers to it.  llvm-libtool-darwin
+# is not used at all.
+#
+set(LLVM_BUILD_UTILS OFF)
+set(LLVM_TOOL_LLVM_LIBTOOL_DARWIN_BUILD OFF)
+
 # Defaults for the components that we do not use
 #
 set(_smlnj_llvm_unused
